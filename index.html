@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Deep Darkness</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0912;
+    --bg-raised: #1a1730;
+    --bg-card: #1d1a35;
+    --bg-card-alt: #221b3d;
+    --ink: #f4f2fb;
+    --ink-dim: #a7a1c4;
+    --line: #34305a;
+    --spy-red: #ff4d5e;
+    --spy-red-dim: #3d0f1c;
+    --gold: #f0c46e;
+    --gold-dim: #7a5f2c;
+    --violet: #7c5cff;
+    --amber: #f0a44b;
+    --good: #4fd6a0;
+    --focus: #9c8bff;
+    --radius: 18px;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #0a0912;
+      --bg-raised: #1a1730;
+      --bg-card: #1d1a35;
+      --bg-card-alt: #221b3d;
+      --ink: #f4f2fb;
+      --ink-dim: #a7a1c4;
+      --line: #34305a;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+    overscroll-behavior: none;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    background:
+      radial-gradient(560px 420px at 50% -6%, rgba(124, 92, 255, 0.28), transparent 60%),
+      radial-gradient(480px 360px at 90% 100%, rgba(255, 77, 94, 0.14), transparent 60%),
+      var(--bg);
+    background-attachment: fixed;
+  }
+  .stage {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    min-height: min(760px, calc(100vh - 40px));
+    justify-content: center;
+  }
+  h1, h2, h3 { font-family: 'Outfit', sans-serif; margin: 0; letter-spacing: -0.01em; }
+  button {
+    font-family: inherit;
+    border: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:focus-visible, input:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .screen { display: none; flex-direction: column; gap: 22px; }
+  .screen.active { display: flex; }
+
+  /* ---- Title ---- */
+  .brand {
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .brand .mark {
+    font-family: 'Cinzel', serif;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #fff 0%, var(--gold) 65%, var(--gold-dim) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 26px rgba(240, 196, 110, 0.35);
+    display: inline-block;
+  }
+  .brand .mark span { color: var(--spy-red); -webkit-text-fill-color: var(--spy-red); }
+  .brand p {
+    color: var(--ink-dim);
+    font-size: 14.5px;
+    margin-top: 10px;
+  }
+
+
+  /* ---- Language switcher ---- */
+  .lang-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .lang-row button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+    transition: transform .12s, border-color .15s, color .15s, box-shadow .15s;
+  }
+  .lang-row button .flag { font-size: 15px; line-height: 1; }
+  .lang-row button:active { transform: scale(0.95); }
+  .lang-row button.active {
+    background: rgba(240, 196, 110, 0.12);
+    color: var(--gold);
+    border-color: var(--gold-dim);
+    box-shadow: 0 0 0 1px rgba(240, 196, 110, 0.15), 0 0 16px rgba(240, 196, 110, 0.2);
+  }
+
+  /* ---- Setup ---- */
+  .panel {
+    background: var(--bg-card-alt);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: 0 20px 50px -25px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+  .field-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .field-label { font-size: 15px; font-weight: 500; }
+  .field-sub { font-size: 13px; color: var(--ink-dim); margin-top: 2px; }
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--bg-raised);
+    border-radius: 999px;
+    padding: 6px;
+  }
+  .stepper button {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    color: var(--ink);
+    font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .stepper button:active { background: var(--line); }
+  .stepper .count {
+    font-family: 'Outfit', sans-serif;
+    font-size: 19px;
+    font-weight: 700;
+    min-width: 24px;
+    text-align: center;
+    color: var(--gold);
+  }
+  .divider { height: 1px; background: var(--line); margin: 18px 0; border: none; }
+
+  /* ---- Minimalist icon dials (players / spies / timer) ---- */
+  .dial-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    margin: 4px 0 26px;
+  }
+  .dial-row {
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    width: 100%;
+  }
+  .dial {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    max-width: 170px;
+  }
+  .dial-icon {
+    width: 46px;
+    height: 46px;
+    color: var(--ink);
+    opacity: 0.92;
+  }
+  .dial-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .dial-value {
+    font-family: 'Outfit', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    min-width: 36px;
+    text-align: center;
+    color: var(--gold);
+  }
+  .tri-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0;
+    border-radius: 10px;
+    transition: background .12s;
+  }
+  .tri-btn:active { background: rgba(255,255,255,0.06); }
+  .tri-shape { width: 0; height: 0; }
+  .tri-left {
+    border-top: 11px solid transparent;
+    border-bottom: 11px solid transparent;
+    border-right: 16px solid var(--ink);
+  }
+  .tri-right {
+    border-top: 11px solid transparent;
+    border-bottom: 11px solid transparent;
+    border-left: 16px solid var(--ink);
+  }
+  .dial-label {
+    font-size: 13px;
+    color: var(--ink-dim);
+    text-align: center;
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+  }
+
+  .toggle-row {
+    display: flex;
+    background: var(--bg-raised);
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+  }
+  .toggle-row button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--ink-dim);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .toggle-row button.active {
+    background: var(--bg-card);
+    color: var(--gold);
+  }
+
+  textarea, input[type=text] {
+    width: 100%;
+    background: var(--bg-raised);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 12px 14px;
+    resize: vertical;
+  }
+  .word-count { font-size: 12.5px; color: var(--ink-dim); margin-top: 8px; }
+  .combine-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 12px;
+    font-size: 13.5px;
+    color: var(--ink-dim);
+    cursor: pointer;
+  }
+  .combine-row input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--gold);
+    cursor: pointer;
+  }
+
+  .primary-btn {
+    background: linear-gradient(135deg, #ffd98a 0%, var(--gold) 55%, #d99a3d 100%);
+    color: #24170a;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    padding: 17px;
+    border-radius: 14px;
+    width: 100%;
+    box-shadow: 0 10px 30px -8px rgba(240, 196, 110, 0.55);
+    animation: btn-pulse 2.6s ease-in-out infinite;
+    transition: transform .12s, opacity .12s, box-shadow .15s;
+  }
+  .primary-btn:active { transform: scale(0.98); box-shadow: 0 6px 18px -8px rgba(240, 196, 110, 0.5); animation: none; }
+  .primary-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; animation: none; }
+  @keyframes btn-pulse {
+    0%, 100% { box-shadow: 0 10px 30px -8px rgba(240, 196, 110, 0.55); }
+    50% { box-shadow: 0 10px 38px -6px rgba(240, 196, 110, 0.85); }
+  }
+
+  .secondary-btn {
+    background: transparent;
+    color: var(--ink-dim);
+    font-size: 14.5px;
+    font-weight: 500;
+    padding: 12px;
+    border-radius: 12px;
+    width: 100%;
+    border: 1px solid var(--line);
+  }
+  .secondary-btn:active { background: var(--bg-raised); }
+
+  .ghost-link {
+    background: none;
+    color: var(--ink-dim);
+    font-size: 13.5px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    padding: 6px;
+    align-self: center;
+  }
+
+  /* ---- Pass / Reveal screen ---- */
+  .pass-progress {
+    text-align: center;
+    color: var(--ink-dim);
+    font-size: 13.5px;
+    letter-spacing: 0.02em;
+  }
+  .reveal-card {
+    background: linear-gradient(160deg, var(--bg-card) 0%, var(--bg-raised) 100%);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 46px 24px;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 18px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 25px 60px -30px rgba(124, 92, 255, 0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+    transition: background .25s, border-color .25s, box-shadow .25s;
+  }
+  .reveal-card.is-spy {
+    background: linear-gradient(160deg, var(--spy-red-dim) 0%, #23070f 100%);
+    border-color: var(--spy-red);
+    box-shadow: 0 25px 60px -25px rgba(255, 77, 94, 0.55), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .player-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 21px;
+    font-weight: 600;
+  }
+  .reveal-hint { color: var(--ink-dim); font-size: 14px; max-width: 240px; }
+  .tap-target {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+    background: transparent;
+  }
+  .word-display {
+    font-family: 'Outfit', sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    text-transform: capitalize;
+    color: var(--gold);
+  }
+  .spy-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--spy-red);
+    text-shadow: 0 0 24px rgba(255, 77, 94, 0.55);
+  }
+  .role-caption { font-size: 13.5px; color: var(--ink-dim); }
+
+  /* ---- Timer ---- */
+  .timer-wrap { text-align: center; }
+  .timer-big {
+    font-family: 'Outfit', sans-serif;
+    font-size: 76px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    margin: 18px 0 6px;
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(240, 196, 110, 0.3);
+  }
+  .timer-label { color: var(--ink-dim); font-size: 14px; }
+  .timer-actions { display: flex; gap: 10px; margin-top: 26px; }
+  .timer-actions button { flex: 1; }
+  .icon-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 15px;
+    border-radius: 12px;
+    font-size: 14.5px;
+    font-weight: 500;
+  }
+  .icon-btn:active { background: var(--bg-raised); }
+  .timer-ring-wrap { display: flex; justify-content: center; }
+
+  /* ---- End screen ---- */
+  .end-card {
+    background: linear-gradient(160deg, var(--bg-card) 0%, var(--bg-raised) 100%);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 40px 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    align-items: center;
+    min-height: 220px;
+    justify-content: center;
+    box-shadow: 0 25px 60px -30px rgba(124, 92, 255, 0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .end-title { font-family: 'Outfit', sans-serif; font-size: 19px; font-weight: 600; color: var(--gold); }
+  .outcome-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .outcome-btn { width: 100%; }
+  .word-reveal-line { color: var(--ink-dim); font-size: 14px; }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    overflow: hidden; clip: rect(0,0,0,0);
+  }
+
+  /* ---- Top bar / back button ---- */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .top-bar-spacer { flex: 1; min-width: 10px; }
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 999px;
+    flex: 1;
+  }
+  .back-btn:active { background: var(--bg-raised); }
+  .top-bar .pass-progress { flex: 2; margin: 0; }
+
+  /* ---- Exit confirmation modal ---- */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 5, 12, 0.72);
+    backdrop-filter: blur(2px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 50;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal-card {
+    width: 100%;
+    max-width: 360px;
+    background: linear-gradient(160deg, var(--bg-card) 0%, var(--bg-raised) 100%);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 26px 22px;
+    box-shadow: 0 30px 70px -25px rgba(0,0,0,0.8);
+  }
+  .modal-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .modal-body {
+    font-size: 14px;
+    color: var(--ink-dim);
+    line-height: 1.5;
+    margin-bottom: 22px;
+  }
+  .modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .danger-btn {
+    background: var(--spy-red);
+    color: #2a0006;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 14px;
+    border-radius: 12px;
+    width: 100%;
+  }
+  .danger-btn:active { opacity: 0.85; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- ========== SETUP SCREEN ========== -->
+  <section class="screen active" id="screen-setup">
+    <div class="brand">
+      <div class="mark">Deep Darkness<span>.</span></div>
+      <p data-i18n="tagline">One phone. One spy hiding in plain sight.</p>
+      <div class="lang-row">
+        <button id="lang-en" class="active" data-lang="en"><span class="flag">🇺🇸</span>EN</button>
+        <button id="lang-hy" data-lang="hy"><span class="flag">🇦🇲</span>ՀԱՅ</button>
+        <button id="lang-ru" data-lang="ru"><span class="flag">🇷🇺</span>РУС</button>
+      </div>
+    </div>
+
+    <div class="dial-section">
+      <div class="dial dial-time">
+        <svg class="dial-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <line x1="20" y1="14" x2="9" y2="25" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+          <line x1="80" y1="14" x2="91" y2="25" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+          <circle cx="50" cy="56" r="34" stroke="currentColor" stroke-width="6"/>
+          <line x1="50" y1="56" x2="50" y2="37" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+          <line x1="50" y1="56" x2="62" y2="61" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+        <div class="dial-controls">
+          <button class="tri-btn" id="timer-dec" aria-label="Less time"><span class="tri-shape tri-left"></span></button>
+          <div class="dial-value" id="timer-count">1</div>
+          <button class="tri-btn" id="timer-inc" aria-label="More time"><span class="tri-shape tri-right"></span></button>
+        </div>
+        <div class="dial-label" data-i18n="timerLabel">Discussion timer</div>
+      </div>
+
+      <div class="dial-row">
+        <div class="dial">
+          <svg class="dial-icon" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="50" cy="30" r="20"/>
+            <path d="M50 55c-22 0-38 16-38 38v3h76v-3c0-22-16-38-38-38z"/>
+          </svg>
+          <div class="dial-controls">
+            <button class="tri-btn" id="players-dec" aria-label="Fewer players"><span class="tri-shape tri-left"></span></button>
+            <div class="dial-value" id="players-count">3</div>
+            <button class="tri-btn" id="players-inc" aria-label="More players"><span class="tri-shape tri-right"></span></button>
+          </div>
+          <div class="dial-label" data-i18n="playersLabel">Players</div>
+        </div>
+
+        <div class="dial">
+          <svg class="dial-icon" viewBox="0 0 100 70" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <ellipse cx="50" cy="55" rx="46" ry="9"/>
+            <path d="M25 50c0-22 11-40 25-40s25 18 25 40z"/>
+            <rect x="16" y="46" width="68" height="8" rx="4"/>
+          </svg>
+          <div class="dial-controls">
+            <button class="tri-btn" id="spies-dec" aria-label="Fewer spies"><span class="tri-shape tri-left"></span></button>
+            <div class="dial-value" id="spies-count">1</div>
+            <button class="tri-btn" id="spies-inc" aria-label="More spies"><span class="tri-shape tri-right"></span></button>
+          </div>
+          <div class="dial-label" data-i18n="spiesLabel">Number of spies</div>
+        </div>
+      </div>
+
+      <div class="sr-only" id="players-sub">3 people playing</div>
+      <div class="sr-only" id="spies-sub">1 spy hidden</div>
+      <div class="sr-only" id="timer-sub">1 minute</div>
+    </div>
+
+    <div class="panel">
+      <div class="field-label" style="margin-bottom:10px;" data-i18n="wordListLabel">Word list</div>
+      <div class="toggle-row">
+        <button id="mode-builtin" class="active" data-i18n="modeBuiltin">Everyday words</button>
+        <button id="mode-custom" data-i18n="modeCustom">Your own words</button>
+      </div>
+
+      <div id="custom-word-panel" style="display:none; margin-top:14px;">
+        <textarea id="custom-words" rows="4" placeholder="Type one word per line: pizza&#10;beach&#10;hospital"></textarea>
+        <div class="word-count" id="custom-word-count">0 words saved</div>
+        <label class="combine-row">
+          <input type="checkbox" id="combine-words">
+          <span data-i18n="combineWordsLabel">Also mix in the everyday words</span>
+        </label>
+      </div>
+    </div>
+
+    <button class="primary-btn" id="start-game-btn" data-i18n="startButton">Start game</button>
+  </section>
+
+  <!-- ========== PASS / REVEAL SCREEN ========== -->
+  <section class="screen" id="screen-reveal">
+    <div class="top-bar">
+      <button class="back-btn" id="exit-from-reveal" aria-label="Exit round">
+        <span aria-hidden="true">←</span> <span data-i18n="exitButton">Exit</span>
+      </button>
+      <div class="pass-progress" id="pass-progress">Player 1 of 6</div>
+      <div class="top-bar-spacer"></div>
+    </div>
+
+    <div class="reveal-card" id="reveal-card">
+      <button class="tap-target" id="reveal-tap" aria-label="Tap to reveal your role"></button>
+      <div id="reveal-prompt">
+        <div class="player-name" id="current-player-name">Player 1</div>
+        <div class="reveal-hint" data-i18n="revealHint">Make sure no one else can see the screen, then tap to reveal your role.</div>
+      </div>
+      <div id="reveal-result" style="display:none;">
+        <div id="result-word" class="word-display"></div>
+        <div id="result-spy" class="spy-label" style="display:none;" data-i18n="spyLabel">YOU ARE THE SPY</div>
+        <div class="role-caption" id="result-caption"></div>
+      </div>
+    </div>
+
+    <button class="primary-btn" id="hide-pass-btn" style="display:none;" data-i18n="hidePassButton">Hide &amp; pass to next player</button>
+  </section>
+
+  <!-- ========== TIMER SCREEN ========== -->
+  <section class="screen" id="screen-timer">
+    <div class="top-bar">
+      <button class="back-btn" id="exit-from-timer" aria-label="Exit round">
+        <span aria-hidden="true">←</span> <span data-i18n="exitButton">Exit</span>
+      </button>
+      <div class="top-bar-spacer"></div>
+      <div class="top-bar-spacer"></div>
+    </div>
+    <div class="timer-wrap">
+      <div class="timer-label" data-i18n="timerHeading">Discuss and find the spy</div>
+      <div class="timer-big" id="timer-display">01:00</div>
+      <div class="timer-label" id="timer-status">Timer running</div>
+    </div>
+    <div class="timer-actions">
+      <button class="icon-btn" id="timer-pause-btn" data-i18n="pauseButton">Pause</button>
+      <button class="icon-btn" id="timer-end-btn" data-i18n="endButton">End round</button>
+    </div>
+  </section>
+
+  <!-- ========== END SCREEN ========== -->
+  <section class="screen" id="screen-end">
+    <div class="end-card">
+      <div id="end-pre">
+        <div class="end-title" data-i18n="endPreTitle">Time to vote</div>
+        <div class="reveal-hint" data-i18n="endPreHint">Decide together who you think the spy is, then reveal the answer.</div>
+      </div>
+      <div id="end-post" style="display:none;">
+        <div class="end-title" id="end-spy-name"></div>
+        <div class="word-reveal-line" id="end-word-line"></div>
+      </div>
+    </div>
+    <div class="outcome-row" id="outcome-row">
+      <button class="primary-btn outcome-btn" id="outcome-caught-btn" data-i18n="outcomeCaughtButton">We caught the spy</button>
+      <button class="secondary-btn outcome-btn" id="outcome-escaped-btn" data-i18n="outcomeEscapedButton">Spy got away</button>
+    </div>
+    <button class="secondary-btn" id="play-again-btn" style="display:none;" data-i18n="playAgainButton">Play again</button>
+    <button class="ghost-link" id="new-setup-btn" style="display:none;" data-i18n="changeSetupButton">Change players or word list</button>
+  </section>
+
+  <!-- ========== EXIT CONFIRMATION MODAL ========== -->
+  <div class="modal-overlay" id="exit-modal">
+    <div class="modal-card">
+      <div class="modal-title" data-i18n="exitModalTitle">Leave this round?</div>
+      <div class="modal-body" data-i18n="exitModalBody">Everyone's roles will be forgotten and you'll have to start over.</div>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="exit-cancel" data-i18n="exitModalCancel">Keep playing</button>
+        <button class="danger-btn" id="exit-confirm" data-i18n="exitModalConfirm">Leave round</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Translations ----------
+  var TRANSLATIONS = {
+    en: {
+      tagline: "One phone. One spy hiding in plain sight.",
+      playersLabel: "Players",
+      spiesLabel: "Number of spies",
+      timerLabel: "Discussion timer",
+      wordListLabel: "Word list",
+      modeBuiltin: "Everyday words",
+      modeCustom: "Your own words",
+      customPlaceholder: "Type one word per line:\npizza\nbeach\nhospital",
+      combineWordsLabel: "Also mix in the everyday words",
+      startButton: "Start game",
+      revealHint: "Make sure no one else can see the screen, then tap to reveal your role.",
+      spyLabel: "YOU ARE THE SPY",
+      spyCaption: "Blend in. Everyone else knows the word.",
+      wordCaption: "Remember it. Don't say it out loud.",
+      hidePassButton: "Hide & pass to next player",
+      timerHeading: "Discuss and find the spy",
+      timerRunning: "Timer running",
+      timerPaused: "Timer paused",
+      timerUp: "Time's up",
+      pauseButton: "Pause",
+      resumeButton: "Resume",
+      endButton: "End round",
+      endPreTitle: "Time to vote",
+      endPreHint: "Decide together who you think the spy is, then tell us what happened.",
+      outcomeCaughtButton: "We caught the spy",
+      outcomeEscapedButton: "The spy got away",
+      playAgainButton: "Play again",
+      changeSetupButton: "Change players or word list",
+      exitButton: "Exit",
+      exitModalTitle: "Leave this round?",
+      exitModalBody: "Everyone's roles will be forgotten and you'll have to start over.",
+      exitModalCancel: "Keep playing",
+      exitModalConfirm: "Leave round",
+      playerWord: "Player",
+      playersSubUnit: "people playing",
+      spySubUnitSingular: "spy hidden",
+      spySubUnitPlural: "spies hidden",
+      minuteSingular: "minute",
+      minutePlural: "minutes",
+      wordSavedSingular: "word saved",
+      wordSavedPlural: "words saved",
+      and: "and",
+      passProgress: function (i, n) { return "Player " + i + " of " + n; },
+      caughtWas: function (name) { return name + " was caught \u2014 nice work!"; },
+      caughtWere: function (names) { return names + " were caught \u2014 nice work!"; },
+      escapedWas: function (name) { return "It was " + name + " \u2014 and they got away with it!"; },
+      escapedWere: function (names) { return names + " got away with it!"; },
+      wordWas: function (word) { return "The word was \u201c" + word + "\u201d"; }
+    },
+    ru: {
+      tagline: "Один телефон. Один шпион скрывается у всех на виду.",
+      playersLabel: "Игроки",
+      spiesLabel: "Количество шпионов",
+      timerLabel: "Таймер обсуждения",
+      wordListLabel: "Список слов",
+      modeBuiltin: "Обычные слова",
+      modeCustom: "Свои слова",
+      customPlaceholder: "По одному слову в строке:\nпицца\nпляж\nбольница",
+      combineWordsLabel: "Также добавить обычные слова",
+      startButton: "Начать игру",
+      revealHint: "Убедитесь, что никто не видит экран, затем нажмите, чтобы узнать свою роль.",
+      spyLabel: "ВЫ ШПИОН",
+      spyCaption: "Ведите себя естественно. Все остальные знают слово.",
+      wordCaption: "Запомните его. Не произносите вслух.",
+      hidePassButton: "Скрыть и передать следующему",
+      timerHeading: "Обсудите и найдите шпиона",
+      timerRunning: "Таймер идёт",
+      timerPaused: "Таймер на паузе",
+      timerUp: "Время вышло",
+      pauseButton: "Пауза",
+      resumeButton: "Продолжить",
+      endButton: "Завершить раунд",
+      endPreTitle: "Время голосовать",
+      endPreHint: "Решите вместе, кто, по-вашему, шпион, а затем скажите, что произошло.",
+      outcomeCaughtButton: "Мы поймали шпиона",
+      outcomeEscapedButton: "Шпион сбежал",
+      playAgainButton: "Играть снова",
+      changeSetupButton: "Изменить игроков или список слов",
+      exitButton: "Выйти",
+      exitModalTitle: "Покинуть раунд?",
+      exitModalBody: "Все роли будут забыты, и игру придётся начать заново.",
+      exitModalCancel: "Остаться в игре",
+      exitModalConfirm: "Покинуть раунд",
+      playerWord: "Игрок",
+      playersSubUnit: "играют",
+      spySubUnitSingular: "шпион",
+      spySubUnitPlural: "шпионов",
+      minuteSingular: "минута",
+      minutePlural: "минут",
+      wordSavedSingular: "слово сохранено",
+      wordSavedPlural: "слов сохранено",
+      and: "и",
+      passProgress: function (i, n) { return "Игрок " + i + " из " + n; },
+      caughtWas: function (name) { return name + " был пойман \u2014 отличная работа!"; },
+      caughtWere: function (names) { return names + " были пойманы \u2014 отличная работа!"; },
+      escapedWas: function (name) { return "Это был " + name + " \u2014 и он сумел сбежать!"; },
+      escapedWere: function (names) { return names + " сумели сбежать!"; },
+      wordWas: function (word) { return "Слово было: \u00ab" + word + "\u00bb"; }
+    },
+    hy: {
+      tagline: "Մեկ հեռախոս: Մեկ լրտես՝ թաքնված բոլորի աչքի առաջ:",
+      playersLabel: "Խաղացողներ",
+      spiesLabel: "Լրտեսների քանակը",
+      timerLabel: "Քննարկման ժամաչափ",
+      wordListLabel: "Բառերի ցանկ",
+      modeBuiltin: "Առօրյա բառեր",
+      modeCustom: "Սեփական բառեր",
+      customPlaceholder: "Յուրաքանչյուր տողում մեկ բառ գրեք:\nպիցցա\nլողափ\nհիվանդանոց",
+      combineWordsLabel: "Ավելացնել նաև առօրյա բառերը",
+      startButton: "Սկսել խաղը",
+      revealHint: "Համոզվեք, որ ոչ ոք չի տեսնում էկրանը, ապա սեղմեք՝ ձեր դերը տեսնելու համար:",
+      spyLabel: "ԴՈՒ ԼՐՏԵՍ ԵՍ",
+      spyCaption: "Ձևացրու, թե գիտես բառը: Մնացած բոլորը գիտեն այն:",
+      wordCaption: "Հիշիր այն: Բարձրաձայն մի ասա:",
+      hidePassButton: "Թաքցնել և փոխանցել հաջորդին",
+      timerHeading: "Քննարկեք և գտեք լրտեսին",
+      timerRunning: "Ժամաչափն ընթանում է",
+      timerPaused: "Ժամաչափը դադարեցված է",
+      timerUp: "Ժամանակը սպառվեց",
+      pauseButton: "Դադար",
+      resumeButton: "Շարունակել",
+      endButton: "Ավարտել փուլը",
+      endPreTitle: "Քվեարկելու ժամանակն է",
+      endPreHint: "Միասին որոշեք, թե ըստ ձեզ ով է լրտեսը, ապա ասեք, թե ինչ եղավ:",
+      outcomeCaughtButton: "Բռնեցինք լրտեսին",
+      outcomeEscapedButton: "Լրտեսը փախավ",
+      playAgainButton: "Խաղալ նորից",
+      changeSetupButton: "Փոխել խաղացողներին կամ բառացանկը",
+      exitButton: "Դուրս գալ",
+      exitModalTitle: "Դուրս գա՞լ խաղից:",
+      exitModalBody: "Բոլորի դերերը կմոռացվեն, և խաղը պետք է սկսել նորից:",
+      exitModalCancel: "Շարունակել խաղը",
+      exitModalConfirm: "Դուրս գալ",
+      playerWord: "Խաղացող",
+      playersSubUnit: "հոգի են խաղում",
+      spySubUnitSingular: "լրտես",
+      spySubUnitPlural: "լրտես",
+      minuteSingular: "րոպե",
+      minutePlural: "րոպե",
+      wordSavedSingular: "բառ պահպանված է",
+      wordSavedPlural: "բառ պահպանված է",
+      and: "և",
+      passProgress: function (i, n) { return "Խաղացող " + i + " / " + n; },
+      caughtWas: function (name) { return name + "-ը բռնվեց \u2014 լավ խաղացիք!"; },
+      caughtWere: function (names) { return names + "-ը բռնվեցին \u2014 լավ խաղացիք!"; },
+      escapedWas: function (name) { return "Դա " + name + "-ն էր \u2014 և նա փախավ!"; },
+      escapedWere: function (names) { return names + "-ը փախան!"; },
+      wordWas: function (word) { return "Բառը եղել է՝ \u00ab" + word + "\u00bb"; }
+    }
+  };
+
+  // ---------- Word banks ----------
+  var WORD_BANKS = {
+    en: [
+      "pizza","beach","hospital","airport","library","mountain","school","train",
+      "kitchen","forest","stadium","circus","desert","volcano","castle","farm",
+      "submarine","spaceship","museum","bakery","garden","bridge","island","cave",
+      "campfire","waterfall","supermarket","classroom","gym","zoo","aquarium",
+      "restaurant","bank","church","hotel","theater","playground","harbor",
+      "lighthouse","subway","elevator","rooftop","tent","canoe","bicycle",
+      "umbrella","backpack","guitar","piano","telescope","compass","map",
+      "campground","orchard","vineyard","greenhouse","barn","cabin","pier",
+      "carnival","parade","wedding","birthday party","office","factory",
+      "laboratory","courtroom","prison","pharmacy","bookstore","cafe"
+    ],
+    ru: [
+      "пицца","пляж","больница","аэропорт","библиотека","гора","школа","поезд",
+      "кухня","лес","стадион","цирк","пустыня","вулкан","замок","ферма",
+      "подводная лодка","космический корабль","музей","пекарня","сад","мост",
+      "остров","пещера","костёр","водопад","супермаркет","класс","спортзал",
+      "зоопарк","аквариум","ресторан","банк","церковь","отель","театр",
+      "детская площадка","гавань","маяк","метро"
+    ],
+    hy: [
+      "պիցցա","լողափ","հիվանդանոց","օդանավակայան","գրադարան","լեռ","դպրոց","գնացք",
+      "խոհանոց","անտառ","մարզադաշտ","կրկես","անապատ","հրաբուխ","ամրոց","ագարակ",
+      "սուզանավ","տիեզերանավ","թանգարան","հացաբուլկեղեն","այգի","կամուրջ",
+      "կղզի","քարանձավ","խարույկ","ջրվեժ","սուպերմարկետ","դասարան","մարզասրահ",
+      "կենդանաբանական այգի","ակվարիում","ռեստորան","բանկ","եկեղեցի","հյուրանոց",
+      "թատրոն","խաղահրապարակ","նավահանգիստ","փարոս","մետրո"
+    ]
+  };
+
+  var STORAGE_KEY = "spyGameCustomWords";
+  var LANG_KEY = "spyGameLang";
+  var COMBINE_KEY = "spyGameCombineWords";
+
+  // ---------- State ----------
+  var state = {
+    lang: "en",
+    playerCount: 3,
+    spyCount: 1,
+    timerMinutes: 1,
+    wordMode: "builtin", // or "custom"
+    players: [],       // [{name, isSpy}]
+    currentIndex: 0,
+    word: "",
+    spyIndexes: [],
+    lastOutcome: null,
+    revealed: false,
+    timerSeconds: 0,
+    timerHandle: null,
+    timerPaused: false
+  };
+
+  function t() { return TRANSLATIONS[state.lang]; }
+
+  function maxSpiesFor(playerCount) {
+    // keep at least 2 non-spies so the game stays playable
+    return Math.max(1, Math.min(4, playerCount - 2));
+  }
+
+  // ---------- True random helper ----------
+  // Uses the browser's cryptographic RNG (unbiased, unpredictable) when
+  // available, with rejection sampling so every integer in [0, maxExclusive)
+  // has exactly equal probability. Falls back to Math.random only if the
+  // crypto API isn't present.
+  function randomInt(maxExclusive) {
+    if (maxExclusive <= 0) return 0;
+    if (window.crypto && window.crypto.getRandomValues) {
+      var range = maxExclusive;
+      var maxUint32 = 0xFFFFFFFF;
+      var limit = maxUint32 - (maxUint32 % range);
+      var buf = new Uint32Array(1);
+      var val;
+      do {
+        window.crypto.getRandomValues(buf);
+        val = buf[0];
+      } while (val >= limit);
+      return val % range;
+    }
+    return Math.floor(Math.random() * maxExclusive);
+  }
+
+  // ---------- Sound effects (synthesized, no audio files needed) ----------
+  var audioCtx = null;
+  var reverbNode = null;
+
+  function getAudioCtx() {
+    if (!audioCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
+  // A short synthesized concert-hall reverb tail (decaying filtered noise),
+  // built once and reused, so notes have natural "air" instead of sounding dry.
+  function getReverb(ctx) {
+    if (reverbNode) return reverbNode;
+    var duration = 2.0;
+    var rate = ctx.sampleRate;
+    var length = Math.floor(rate * duration);
+    var buffer = ctx.createBuffer(2, length, rate);
+    for (var ch = 0; ch < 2; ch++) {
+      var data = buffer.getChannelData(ch);
+      for (var i = 0; i < length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2.2);
+      }
+    }
+    reverbNode = ctx.createConvolver();
+    reverbNode.buffer = buffer;
+    reverbNode.connect(ctx.destination);
+    return reverbNode;
+  }
+
+  // A simple bright pluck/tone for UI-style sounds (used for the start chime).
+  function playTone(ctx, freq, startTime, duration, type, peakGain) {
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = type || "triangle";
+    osc.frequency.setValueAtTime(freq, startTime);
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(peakGain || 0.25, startTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.02);
+  }
+
+  // A richer, brass/orchestra-hit style note: three slightly detuned
+  // sawtooth voices (chorus, like a real ensemble is never perfectly in
+  // unison) run through a lowpass filter that closes over time (mimics the
+  // way a struck/blown note's overtones die out first), plus a touch of
+  // reverb send so it doesn't sound flat and synthetic.
+  function playOrchestralNote(ctx, freq, startTime, duration, peakGain, vibrato) {
+    var filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.Q.value = 0.7;
+    filter.frequency.setValueAtTime(freq * 7, startTime);
+    filter.frequency.exponentialRampToValueAtTime(Math.max(freq * 1.8, 200), startTime + duration);
+
+    var envGain = ctx.createGain();
+    var attack = Math.min(0.02, duration * 0.15);
+    envGain.gain.setValueAtTime(0.0001, startTime);
+    envGain.gain.exponentialRampToValueAtTime(peakGain, startTime + attack);
+    envGain.gain.exponentialRampToValueAtTime(Math.max(peakGain * 0.55, 0.0002), startTime + duration * 0.6);
+    envGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+    var dryGain = ctx.createGain();
+    dryGain.gain.value = 0.8;
+    var wetGain = ctx.createGain();
+    wetGain.gain.value = 0.4;
+
+    filter.connect(envGain);
+    envGain.connect(dryGain).connect(ctx.destination);
+    envGain.connect(wetGain).connect(getReverb(ctx));
+
+    var detunes = [-7, 0, 7];
+    var oscs = [];
+    detunes.forEach(function (cents) {
+      var osc = ctx.createOscillator();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(freq, startTime);
+      osc.detune.setValueAtTime(cents, startTime);
+      osc.connect(filter);
+      osc.start(startTime);
+      osc.stop(startTime + duration + 0.1);
+      oscs.push(osc);
+    });
+
+    if (vibrato) {
+      var lfo = ctx.createOscillator();
+      var lfoGain = ctx.createGain();
+      lfo.frequency.value = 5.5;
+      lfoGain.gain.value = 9; // cents of wobble
+      lfo.connect(lfoGain);
+      oscs.forEach(function (osc) { lfoGain.connect(osc.detune); });
+      lfo.start(startTime + duration * 0.25);
+      lfo.stop(startTime + duration + 0.1);
+    }
+  }
+
+  function playStartSound() {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    var now = ctx.currentTime;
+    // rising three-note arpeggio: bright and inviting
+    var notes = [440.0, 554.37, 659.25];
+    notes.forEach(function (freq, i) {
+      playTone(ctx, freq, now + i * 0.09, 0.18, "triangle", 0.22);
+    });
+  }
+
+  function playSpyFoundSound() {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    var now = ctx.currentTime;
+
+    // Beethoven's Symphony No. 5 opening "fate" motif: three short notes,
+    // then a longer note a third lower, held with a dramatic swell.
+    var shortFreq = 392.00;   // G4
+    var longFreq = 311.13;    // Eb4
+    var noteGap = 0.26;
+
+    for (var i = 0; i < 3; i++) {
+      var t = now + i * noteGap;
+      playOrchestralNote(ctx, shortFreq, t, 0.24, 0.34, false);
+      playOrchestralNote(ctx, shortFreq / 2, t, 0.24, 0.16, false);
+    }
+
+    var holdStart = now + 3 * noteGap;
+    var holdDuration = 1.6;
+    playOrchestralNote(ctx, longFreq, holdStart, holdDuration, 0.4, true);
+    playOrchestralNote(ctx, longFreq / 2, holdStart, holdDuration, 0.22, true);
+  }
+
+  // ---------- Helpers ----------
+  function $(id) { return document.getElementById(id); }
+  function showScreen(id) {
+    var screens = document.querySelectorAll(".screen");
+    for (var i = 0; i < screens.length; i++) screens[i].classList.remove("active");
+    $(id).classList.add("active");
+  }
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+
+  function loadCustomWords() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+  function saveCustomWords(words) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(words)); }
+    catch (e) { /* storage unavailable, continue silently */ }
+  }
+  function parseWordsFromTextarea(text) {
+    return text.split("\n")
+      .map(function (w) { return w.trim(); })
+      .filter(function (w) { return w.length > 0; });
+  }
+
+  // ---------- Language ----------
+  function applyLanguage(lang) {
+    state.lang = lang;
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* ignore */ }
+
+    ["en", "hy", "ru"].forEach(function (l) {
+      $("lang-" + l).classList.toggle("active", l === lang);
+    });
+
+    var nodes = document.querySelectorAll("[data-i18n]");
+    for (var i = 0; i < nodes.length; i++) {
+      var key = nodes[i].getAttribute("data-i18n");
+      if (t()[key] !== undefined && typeof t()[key] === "string") {
+        nodes[i].textContent = t()[key];
+      }
+    }
+    $("custom-words").setAttribute("placeholder", t().customPlaceholder);
+
+    updatePlayersUI();
+    updateTimerUI();
+    refreshCustomWordCount();
+    validateStart();
+
+    // refresh dynamic bits of whichever screen is currently mid-game
+    if ($("screen-reveal").classList.contains("active")) {
+      showRevealForCurrentPlayer();
+    }
+    if ($("screen-timer").classList.contains("active")) {
+      $("timer-status").textContent = state.timerPaused ? t().timerPaused : t().timerRunning;
+      $("timer-pause-btn").textContent = state.timerPaused ? t().resumeButton : t().pauseButton;
+    }
+    if ($("screen-end").classList.contains("active") && $("end-post").style.display !== "none") {
+      $("end-spy-name").textContent = buildOutcomeHeading();
+      $("end-word-line").textContent = t().wordWas(state.word);
+    }
+  }
+
+  $("lang-en").addEventListener("click", function () { applyLanguage("en"); });
+  $("lang-hy").addEventListener("click", function () { applyLanguage("hy"); });
+  $("lang-ru").addEventListener("click", function () { applyLanguage("ru"); });
+
+  // ---------- Setup screen wiring ----------
+  function updatePlayersUI() {
+    $("players-count").textContent = state.playerCount;
+    $("players-sub").textContent = state.playerCount + " " + t().playersSubUnit;
+    // spy count can't exceed what's sensible for the new player count
+    var max = maxSpiesFor(state.playerCount);
+    if (state.spyCount > max) state.spyCount = max;
+    updateSpiesUI();
+  }
+  function updateSpiesUI() {
+    $("spies-count").textContent = state.spyCount;
+    var unit = state.spyCount === 1 ? t().spySubUnitSingular : t().spySubUnitPlural;
+    $("spies-sub").textContent = state.spyCount + " " + unit;
+  }
+  function updateTimerUI() {
+    $("timer-count").textContent = state.timerMinutes;
+    var unit = state.timerMinutes === 1 ? t().minuteSingular : t().minutePlural;
+    $("timer-sub").textContent = state.timerMinutes + " " + unit;
+  }
+  function refreshCustomWordCount() {
+    var words = parseWordsFromTextarea($("custom-words").value);
+    var unit = words.length === 1 ? t().wordSavedSingular : t().wordSavedPlural;
+    $("custom-word-count").textContent = words.length + " " + unit;
+  }
+
+  $("players-dec").addEventListener("click", function () {
+    if (state.playerCount > 3) { state.playerCount--; updatePlayersUI(); }
+  });
+  $("players-inc").addEventListener("click", function () {
+    if (state.playerCount < 10) { state.playerCount++; updatePlayersUI(); }
+  });
+  $("spies-dec").addEventListener("click", function () {
+    if (state.spyCount > 1) { state.spyCount--; updateSpiesUI(); }
+  });
+  $("spies-inc").addEventListener("click", function () {
+    var max = maxSpiesFor(state.playerCount);
+    if (state.spyCount < max) { state.spyCount++; updateSpiesUI(); }
+  });
+  $("timer-dec").addEventListener("click", function () {
+    if (state.timerMinutes > 1) { state.timerMinutes--; updateTimerUI(); }
+  });
+  $("timer-inc").addEventListener("click", function () {
+    if (state.timerMinutes < 15) { state.timerMinutes++; updateTimerUI(); }
+  });
+
+  $("mode-builtin").addEventListener("click", function () {
+    state.wordMode = "builtin";
+    $("mode-builtin").classList.add("active");
+    $("mode-custom").classList.remove("active");
+    $("custom-word-panel").style.display = "none";
+    validateStart();
+  });
+  $("mode-custom").addEventListener("click", function () {
+    state.wordMode = "custom";
+    $("mode-custom").classList.add("active");
+    $("mode-builtin").classList.remove("active");
+    $("custom-word-panel").style.display = "block";
+    validateStart();
+  });
+
+  $("custom-words").addEventListener("input", function () {
+    refreshCustomWordCount();
+    saveCustomWords(parseWordsFromTextarea($("custom-words").value));
+    validateStart();
+  });
+
+  $("combine-words").addEventListener("change", function () {
+    try { localStorage.setItem(COMBINE_KEY, $("combine-words").checked ? "1" : "0"); }
+    catch (e) { /* ignore */ }
+    validateStart();
+  });
+
+  function validateStart() {
+    var ok = true;
+    if (state.wordMode === "custom") {
+      var words = parseWordsFromTextarea($("custom-words").value);
+      var effectiveCount = words.length;
+      if ($("combine-words").checked) {
+        effectiveCount += (WORD_BANKS[state.lang] || WORD_BANKS.en).length;
+      }
+      ok = effectiveCount >= 2;
+    }
+    $("start-game-btn").disabled = !ok;
+    return ok;
+  }
+
+  // Restore saved custom words + language on load
+  (function init() {
+    var savedLang = null;
+    try { savedLang = localStorage.getItem(LANG_KEY); } catch (e) { /* ignore */ }
+
+    var saved = loadCustomWords();
+    if (saved.length) {
+      $("custom-words").value = saved.join("\n");
+    }
+
+    try {
+      $("combine-words").checked = localStorage.getItem(COMBINE_KEY) === "1";
+    } catch (e) { /* ignore */ }
+
+    applyLanguage(savedLang && TRANSLATIONS[savedLang] ? savedLang : "en");
+  })();
+
+  // ---------- Game setup ----------
+  function pickWord() {
+    var pool;
+    if (state.wordMode === "custom") {
+      pool = parseWordsFromTextarea($("custom-words").value);
+      if ($("combine-words").checked) {
+        pool = pool.concat(WORD_BANKS[state.lang] || WORD_BANKS.en);
+      }
+    } else {
+      pool = WORD_BANKS[state.lang] || WORD_BANKS.en;
+    }
+    if (!pool.length) pool = WORD_BANKS.en;
+    return pool[randomInt(pool.length)];
+  }
+
+  function startGame() {
+    if (!validateStart()) return;
+
+    state.players = [];
+    for (var i = 1; i <= state.playerCount; i++) {
+      state.players.push({ name: t().playerWord + " " + i, isSpy: false });
+    }
+    var count = Math.min(state.spyCount, maxSpiesFor(state.playerCount));
+    var pool = [];
+    for (var p = 0; p < state.playerCount; p++) pool.push(p);
+    // Fisher-Yates shuffle using the crypto-backed random source above
+    for (var s = pool.length - 1; s > 0; s--) {
+      var r = randomInt(s + 1);
+      var tmp = pool[s]; pool[s] = pool[r]; pool[r] = tmp;
+    }
+    state.spyIndexes = pool.slice(0, count);
+    for (var k = 0; k < state.spyIndexes.length; k++) {
+      state.players[state.spyIndexes[k]].isSpy = true;
+    }
+    state.word = pickWord();
+    state.currentIndex = 0;
+
+    showRevealForCurrentPlayer();
+    showScreen("screen-reveal");
+  }
+
+  $("start-game-btn").addEventListener("click", function () {
+    playStartSound();
+    startGame();
+  });
+
+  // ---------- Reveal / pass screen ----------
+  function showRevealForCurrentPlayer() {
+    state.revealed = false;
+    var idx = state.currentIndex;
+    var player = state.players[idx];
+
+    $("pass-progress").textContent = t().passProgress(idx + 1, state.playerCount);
+    $("current-player-name").textContent = player.name;
+
+    $("reveal-prompt").style.display = "block";
+    $("reveal-result").style.display = "none";
+    $("reveal-card").classList.remove("is-spy");
+    $("hide-pass-btn").style.display = "none";
+    $("reveal-tap").style.display = "block";
+  }
+
+  $("reveal-tap").addEventListener("click", function () {
+    if (state.revealed) return;
+    state.revealed = true;
+
+    var player = state.players[state.currentIndex];
+    $("reveal-prompt").style.display = "none";
+    $("reveal-result").style.display = "flex";
+    $("reveal-result").style.flexDirection = "column";
+    $("reveal-result").style.alignItems = "center";
+    $("reveal-result").style.gap = "10px";
+    $("reveal-tap").style.display = "none";
+    $("hide-pass-btn").style.display = "block";
+
+    if (player.isSpy) {
+      $("reveal-card").classList.add("is-spy");
+      $("result-word").style.display = "none";
+      $("result-spy").style.display = "block";
+      $("result-caption").textContent = t().spyCaption;
+    } else {
+      $("reveal-card").classList.remove("is-spy");
+      $("result-word").style.display = "block";
+      $("result-spy").style.display = "none";
+      $("result-word").textContent = state.word;
+      $("result-caption").textContent = t().wordCaption;
+    }
+  });
+
+  $("hide-pass-btn").addEventListener("click", function () {
+    if (state.currentIndex < state.playerCount - 1) {
+      state.currentIndex++;
+      showRevealForCurrentPlayer();
+    } else {
+      startTimerScreen();
+    }
+  });
+
+  // ---------- Timer screen ----------
+  function startTimerScreen() {
+    state.timerSeconds = state.timerMinutes * 60;
+    state.timerPaused = false;
+    updateTimerDisplay();
+    $("timer-pause-btn").textContent = t().pauseButton;
+    $("timer-status").textContent = t().timerRunning;
+    showScreen("screen-timer");
+    runTimerTick();
+  }
+
+  function updateTimerDisplay() {
+    var m = Math.floor(state.timerSeconds / 60);
+    var s = state.timerSeconds % 60;
+    $("timer-display").textContent = pad(m) + ":" + pad(s);
+  }
+
+  function runTimerTick() {
+    clearInterval(state.timerHandle);
+    state.timerHandle = setInterval(function () {
+      if (state.timerPaused) return;
+      state.timerSeconds--;
+      if (state.timerSeconds <= 0) {
+        state.timerSeconds = 0;
+        updateTimerDisplay();
+        clearInterval(state.timerHandle);
+        $("timer-status").textContent = t().timerUp;
+        goToEndScreen();
+        return;
+      }
+      updateTimerDisplay();
+    }, 1000);
+  }
+
+  $("timer-pause-btn").addEventListener("click", function () {
+    state.timerPaused = !state.timerPaused;
+    $("timer-pause-btn").textContent = state.timerPaused ? t().resumeButton : t().pauseButton;
+    $("timer-status").textContent = state.timerPaused ? t().timerPaused : t().timerRunning;
+  });
+
+  $("timer-end-btn").addEventListener("click", function () {
+    clearInterval(state.timerHandle);
+    goToEndScreen();
+  });
+
+  // ---------- End screen ----------
+  function goToEndScreen() {
+    state.lastOutcome = null;
+    $("end-pre").style.display = "block";
+    $("end-post").style.display = "none";
+    $("outcome-row").style.display = "flex";
+    $("play-again-btn").style.display = "none";
+    $("new-setup-btn").style.display = "none";
+    showScreen("screen-end");
+  }
+
+  function buildOutcomeHeading() {
+    var spyNames = state.spyIndexes.map(function (i) { return state.players[i].name; });
+    var joined = spyNames.length > 1
+      ? spyNames.slice(0, -1).join(", ") + " " + t().and + " " + spyNames[spyNames.length - 1]
+      : spyNames[0];
+
+    if (state.lastOutcome === "caught") {
+      return spyNames.length > 1 ? t().caughtWere(joined) : t().caughtWas(joined);
+    }
+    return spyNames.length > 1 ? t().escapedWere(joined) : t().escapedWas(joined);
+  }
+
+  function revealOutcome(outcome) {
+    playSpyFoundSound();
+    state.lastOutcome = outcome;
+    $("end-pre").style.display = "none";
+    $("end-post").style.display = "block";
+    $("end-spy-name").textContent = buildOutcomeHeading();
+    $("end-word-line").textContent = t().wordWas(state.word);
+    $("outcome-row").style.display = "none";
+    $("play-again-btn").style.display = "block";
+    $("new-setup-btn").style.display = "block";
+  }
+
+  $("outcome-caught-btn").addEventListener("click", function () { revealOutcome("caught"); });
+  $("outcome-escaped-btn").addEventListener("click", function () { revealOutcome("escaped"); });
+
+  $("play-again-btn").addEventListener("click", function () {
+    playStartSound();
+    startGame();
+  });
+
+  $("new-setup-btn").addEventListener("click", function () {
+    showScreen("screen-setup");
+  });
+
+  // ---------- Exit confirmation modal ----------
+  function openExitModal() {
+    $("exit-modal").classList.add("active");
+  }
+  function closeExitModal() {
+    $("exit-modal").classList.remove("active");
+  }
+  function confirmExit() {
+    clearInterval(state.timerHandle);
+    state.timerPaused = false;
+    closeExitModal();
+    showScreen("screen-setup");
+  }
+
+  $("exit-from-reveal").addEventListener("click", openExitModal);
+  $("exit-from-timer").addEventListener("click", openExitModal);
+  $("exit-cancel").addEventListener("click", closeExitModal);
+  $("exit-confirm").addEventListener("click", confirmExit);
+  $("exit-modal").addEventListener("click", function (e) {
+    if (e.target === $("exit-modal")) closeExitModal();
+  });
+
+})();
+</script>
+</body>
+</html>
